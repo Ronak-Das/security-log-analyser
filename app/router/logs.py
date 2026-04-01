@@ -14,7 +14,13 @@ def ingest_log(log: Log):
     }
 
 @router.get("/logs")
-def get_logs(status: str = Query(None)):
+def get_logs(status: str = Query(None), ip: str = Query(None)):
+    filtered_logs = logs_storage
+
     if status:
-        return [log for log in logs_storage if log.status == status]
-    return logs_storage
+        filtered_logs = [log for log in filtered_logs if log.status == status]
+
+    if ip:
+        filtered_logs = [log for log in filtered_logs if log.ip == ip]
+
+    return filtered_logs
