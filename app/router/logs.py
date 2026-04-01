@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter , Query
 from app.models.log_model import Log
 
 logs_storage = []
@@ -14,5 +14,7 @@ def ingest_log(log: Log):
     }
 
 @router.get("/logs")
-def get_logs():
+def get_logs(status: str = Query(None)):
+    if status:
+        return [log for log in logs_storage if log.status == status]
     return logs_storage
