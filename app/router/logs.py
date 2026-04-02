@@ -41,4 +41,7 @@ def detect_suspicious_activity():
         if count > 3
     ]
 
-    return suspicious_ips
+    return {
+    "suspicious_ips": suspicious_ips,
+    "total_suspicious": len(suspicious_ips)
+}
