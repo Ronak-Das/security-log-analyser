@@ -1,6 +1,6 @@
 from fastapi import APIRouter , Query
 from app.models.log_model import Log
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logs_storage = []
 
@@ -27,11 +27,14 @@ def get_logs(status: str = Query(None), ip: str = Query(None)):
     return filtered_logs
 
 @router.get("/alerts")
-def detect_suspicious_activity():
+def detect_suspicious_activity(
+    minutes: int = 10,
+    threshold: int = 3
+):
     ip_fail_count = {}
     
     # Define time window (last 1 minute)
-    time_threshold = datetime.now() - timedelta(minutes=10)
+    time_threshold = datetime.now() - timedelta(minutes=minutes)
 
     # Count failed attempts per IP
     for log in logs_storage:
@@ -42,7 +45,7 @@ def detect_suspicious_activity():
     suspicious_ips = [
         {"ip": ip, "failed_attempts": count}
         for ip, count in ip_fail_count.items()
-        if count > 3
+        if count > threshold
     ]
 
     return {
