@@ -69,5 +69,11 @@ def detect_rate_based_attack(
 
     return {
         "suspicious_ips": suspicious_ips,
-        "total_suspicious": len(suspicious_ips)
+        "total_suspicious": len(suspicious_ips),
+        
+        "config": {
+            "threshold": threshold,
+            "window_seconds": seconds
+        }
     }
+    
