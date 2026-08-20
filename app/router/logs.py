@@ -2,6 +2,8 @@ from fastapi import APIRouter , Query
 from app.models.log_model import Log
 from datetime import datetime, timedelta
 from collections import defaultdict
+from app.db import SessionLocal
+from app.models.log_model import Log, LogDB
 
 logs_storage = []
 
@@ -9,8 +11,23 @@ router = APIRouter()
 
 @router.post("/logs")
 def ingest_log(log: Log):
-    
+
+    db = SessionLocal()
+
+    db_log = LogDB(
+        timestamp=log.timestamp,
+        ip=log.ip,
+        username=log.username,
+        status=log.status
+    )
+
+    db.add(db_log)
+    db.commit()
+
     logs_storage.append(log)
+
+    db.close()
+
     return {
         "message": "log stored successfully"
     }
