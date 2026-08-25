@@ -5,7 +5,6 @@ from collections import defaultdict
 from app.db import SessionLocal
 from app.models.log_model import Log, LogDB
 
-logs_storage = []
 
 router = APIRouter()
 
@@ -23,9 +22,6 @@ def ingest_log(log: Log):
 
     db.add(db_log)
     db.commit()
-
-    logs_storage.append(log)
-
     db.close()
 
     return {
@@ -34,7 +30,13 @@ def ingest_log(log: Log):
 
 @router.get("/logs")
 def get_logs(status: str = Query(None), ip: str = Query(None)):
-    filtered_logs = logs_storage
+    db = SessionLocal()
+
+    logs = db.query(LogDB).all()
+
+    db.close()
+
+    filtered_logs = logs
 
     if status:
         filtered_logs = [log for log in filtered_logs if log.status == status]
@@ -50,11 +52,16 @@ def detect_rate_based_attack(
     seconds: int = Query(60),
     threshold: int = Query(5)
 ):
-    
+    db = SessionLocal()
+
+    logs = db.query(LogDB).all()
+
+    db.close()
+
     ip_logs = defaultdict(list)
-    
-# Collect failed logs per IP
-    for log in logs_storage:
+
+    # Collect failed logs per IP
+    for log in logs:
         if log.status == "failed":
             ip_logs[log.ip].append(log.timestamp)
     
