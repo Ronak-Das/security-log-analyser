@@ -32,19 +32,19 @@ def ingest_log(log: Log):
 def get_logs(status: str = Query(None), ip: str = Query(None)):
     db = SessionLocal()
 
-    logs = db.query(LogDB).all()
+    query = db.query(LogDB)
+
+    if status:
+        query = query.filter(LogDB.status == status)
+
+    if ip:
+        query = query.filter(LogDB.ip == ip)
+
+    logs = query.all()
 
     db.close()
 
-    filtered_logs = logs
-
-    if status:
-        filtered_logs = [log for log in filtered_logs if log.status == status]
-
-    if ip:
-        filtered_logs = [log for log in filtered_logs if log.ip == ip]
-
-    return filtered_logs
+    return logs
 
 @router.get("/alerts/rate")
 
