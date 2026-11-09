@@ -91,3 +91,62 @@ def detect_rate_based_attack(
         }
     }
     
+@router.get("/alerts/account")
+def detect_account_attack(
+    seconds: int = Query(300, gt=0),
+    threshold: int = Query(5, ge=1),
+    db = Depends(get_db)
+):
+    logs = db.query(LogDB).filter(
+        LogDB.status == "failed"
+    ).all()
+
+    username_logs = defaultdict(list)
+
+    # Group failed login attempts by username
+    for log in logs:
+        username_logs[log.username].append(log)
+
+    suspicious_accounts = []
+
+    # Check each username for repeated failed attempts
+    for username, attempts in username_logs.items():
+
+        attempts.sort(key=lambda log: log.timestamp)
+
+        for i in range(len(attempts)):
+            count = 1
+            source_ips = {attempts[i].ip}
+            start_time = attempts[i].timestamp
+
+            for j in range(i + 1, len(attempts)):
+                elapsed = (
+                    attempts[j].timestamp - start_time
+                ).total_seconds()
+
+                if elapsed > seconds:
+                    break
+
+                count += 1
+                source_ips.add(attempts[j].ip)
+
+                if count >= threshold:
+                    suspicious_accounts.append({
+                        "username": username,
+                        "attempts": count,
+                        "source_ips": sorted(source_ips),
+                        "window_seconds": seconds
+                    })
+                    break
+
+            if count >= threshold:
+                break
+
+    return {
+        "suspicious_accounts": suspicious_accounts,
+        "total_suspicious": len(suspicious_accounts),
+        "config": {
+            "threshold": threshold,
+            "window_seconds": seconds
+        }
+    }
