@@ -1,17 +1,12 @@
-from fastapi import APIRouter , Query
-from app.models.log_model import Log
-from datetime import datetime, timedelta
-from collections import defaultdict
-from app.db import SessionLocal
+from fastapi import APIRouter, Query, Depends
+from app.db import get_db
 from app.models.log_model import Log, LogDB
+from collections import defaultdict
 
 
 router = APIRouter()
-
 @router.post("/logs")
-def ingest_log(log: Log):
-
-    db = SessionLocal()
+def ingest_log(log: Log, db = Depends(get_db)):
 
     db_log = LogDB(
         timestamp=log.timestamp,
@@ -22,16 +17,17 @@ def ingest_log(log: Log):
 
     db.add(db_log)
     db.commit()
-    db.close()
+    db.refresh(db_log)
 
     return {
         "message": "log stored successfully"
     }
-
 @router.get("/logs")
-def get_logs(status: str = Query(None), ip: str = Query(None)):
-    db = SessionLocal()
-
+def get_logs(
+    status: str = Query(None),
+    ip: str = Query(None),
+    db = Depends(get_db)
+):
     query = db.query(LogDB)
 
     if status:
@@ -42,21 +38,15 @@ def get_logs(status: str = Query(None), ip: str = Query(None)):
 
     logs = query.all()
 
-    db.close()
-
     return logs
 
 @router.get("/alerts/rate")
-
 def detect_rate_based_attack(
     seconds: int = Query(60),
-    threshold: int = Query(5)
+    threshold: int = Query(5),
+    db = Depends(get_db)
 ):
-    db = SessionLocal()
-
     logs = db.query(LogDB).all()
-
-    db.close()
 
     ip_logs = defaultdict(list)
 
