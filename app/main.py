@@ -10,4 +10,4 @@ app.include_router(logs.router)
 
 @app.get("/")
 def root():
- return {"message: Security Log analyser is running"}
+ return {"message" : "Security Log analyser is running"}
