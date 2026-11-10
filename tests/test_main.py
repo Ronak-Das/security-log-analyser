@@ -157,3 +157,62 @@ def test_account_based_detection(client):
         "192.168.1.201",
         "192.168.1.202"
     }
+    
+def test_invalid_log_status(client):
+  log_data= {
+    
+    "timestamp": "2026-11-09T15:17:00",
+    "ip": "192.168.1.202",
+    "username": "multi_ip_test",
+    "status": "pending"
+  }
+  response = client.post("/logs", json = log_data)
+  
+  assert response.status_code == 422
+
+def test_invalid_ip_address(client):
+    log_data = {
+        "timestamp": "2026-11-10T09:00:00",
+        "ip": "not-an-ip",
+        "username": "testuser",
+        "status": "failed"
+    }
+
+    response = client.post("/logs", json=log_data)
+
+    assert response.status_code == 422
+    
+def test_empty_username(client):
+    log_data = {
+        "timestamp": "2026-11-10T09:00:00",
+        "ip": "192.168.1.100",
+        "username": "",
+        "status": "failed"
+    }
+
+    response = client.post("/logs", json=log_data)
+
+    assert response.status_code == 422
+    
+def test_username_exceeds_max_length(client):
+    log_data = {
+        "timestamp": "2026-11-10T09:00:00",
+        "ip": "192.168.1.100",
+        "username": "a" * 101,
+        "status": "failed"
+    }
+
+    response = client.post("/logs", json=log_data)
+
+    assert response.status_code == 422
+def test_whitespace_username(client):
+    log_data = {
+        "timestamp": "2026-11-10T09:00:00",
+        "ip": "192.168.1.100",
+        "username": "   ",
+        "status": "failed"
+    }
+
+    response = client.post("/logs", json=log_data)
+
+    assert response.status_code == 422
